@@ -1,0 +1,9 @@
+package iPhotoParser
+
+class Main {
+	public static void main(String[] argc){
+		println "hello world" 
+		def parser = new AlbumDataParser("path");
+		
+	}
+}

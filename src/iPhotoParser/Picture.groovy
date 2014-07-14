@@ -1,0 +1,5 @@
+package iPhotoParser
+
+class Picture {
+
+}
