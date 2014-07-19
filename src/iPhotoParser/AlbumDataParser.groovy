@@ -33,16 +33,41 @@ class AlbumDataParser {
 		def rootDict = records.dict.get(0)
 		log.info (" got root: ${rootDict.name()}")
 		recordsMapU =  parseDict(rootDict);
-		
+
 		def pictureMap = processImages(recordsMapU.get(MIL));
 		def albumMap = processAlbums(recordsMapU.get(ALBUMS), pictureMap)
-		
+		def facesMap = processFaces(recordsMapU.get(FACES), pictureMap)
+
 
 		log.info("succesfully parsed ${pictureMap.size()} images")
 		log.info("succesfully parsed ${albumMap.size()} album")
+		log.info("succesfully parsed ${facesMap.size()} faces")
 	}
-	
-	
+
+	def static processFaces(faceMapU, pictureMap){
+		def faceMap=[:]
+		def picToFace = [:]
+		pictureMap.each{k,v->
+			v.faces.each{face->
+				if(picToFace[face]==null){
+					picToFace[face]=[]
+				}
+				picToFace[face].add(v)
+			}
+		}
+		faceMapU.each{k,v ->
+			def f = new Face();
+			f.key=k
+			f.name=v["name"]
+
+			if (picToFace.containsKey(k)){
+				f.pictures.addAll(picToFace[k])
+			}
+			faceMap.put(k,f)
+		}
+		return faceMap
+	}
+
 	def static processAlbums(albumsList, pictureMap){
 		def albumMap = [:]
 		albumsList.each {
@@ -53,13 +78,13 @@ class AlbumDataParser {
 			it["KeyList"].each{
 				a.pictures.add(pictureMap[it])
 			}
-			
+
 			assert it["PhotoCount"] == a.pictures.size();
 			albumMap.put(a.id, a)
 		}
 		return albumMap
 	}
-	
+
 	def static processImages(map){
 		def imageMap = [:]
 		map.each{k,v ->
@@ -75,10 +100,10 @@ class AlbumDataParser {
 		}
 		return imageMap;
 	}
-	
+
 	public static Object parseValue(Node n){
 		String type = n.name();
-		
+
 		if(type=="dict"){
 			return parseDict(n)
 		}
@@ -91,7 +116,7 @@ class AlbumDataParser {
 		if (type=="integer"){
 			return Integer.parseInt(n.text())
 		}
-		
+
 		if (type=="true"){
 			return Boolean.TRUE
 		}
@@ -115,7 +140,7 @@ class AlbumDataParser {
 		}
 		return map
 	}
-	
+
 	public static List parseArray(Node n){
 		def list = []
 		Iterator myIterator = n.iterator();
@@ -125,42 +150,41 @@ class AlbumDataParser {
 		}
 		return list
 	}
-	
-	
-/*
-	private static void parseAlbums(Map rootNode){
-		values.each(){
-			List children = it.children();
-			Iterator myIterator = children.iterator();
-			Album album = new Album();
-			while(myIterator.hasNext()){
-				Node key = myIterator.next();
-				Node value = myIterator.next();
-				String kS = key.text();
-				String vS = value.value();
 
-				if(kS.equals("AlbumName")){
-					album.setName(vS);
-				}
-				if(kS.equals("Album Type")){
-					album.setType(vS)
-				}
-				if(kS.equals("AlbumId")){
-					album.setId(vS)
-				}
-				if(kS.equals("KeyList")){
-					//log.info ("have list of pictures in album ")
-					def pics = []
-					value.value().each{
-						pics.add(it.text());
-					}
-					album.setPictures(pics)
-				}
-			}
-			archive.addAlbum(album)
-			log.info("adding album $album")
-		}
-	}*/
+
+	/*
+	 private static void parseAlbums(Map rootNode){
+	 values.each(){
+	 List children = it.children();
+	 Iterator myIterator = children.iterator();
+	 Album album = new Album();
+	 while(myIterator.hasNext()){
+	 Node key = myIterator.next();
+	 Node value = myIterator.next();
+	 String kS = key.text();
+	 String vS = value.value();
+	 if(kS.equals("AlbumName")){
+	 album.setName(vS);
+	 }
+	 if(kS.equals("Album Type")){
+	 album.setType(vS)
+	 }
+	 if(kS.equals("AlbumId")){
+	 album.setId(vS)
+	 }
+	 if(kS.equals("KeyList")){
+	 //log.info ("have list of pictures in album ")
+	 def pics = []
+	 value.value().each{
+	 pics.add(it.text());
+	 }
+	 album.setPictures(pics)
+	 }
+	 }
+	 archive.addAlbum(album)
+	 log.info("adding album $album")
+	 }
+	 }*/
 	//TODO try to lookup items by name rather then by silly parsing
 	private static void parseFaces(archive, values){
 		log.info ("X $values")

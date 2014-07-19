@@ -100,8 +100,41 @@ class ParserTest {
 		assert 1==albumMap.size();
 		
 		
-		
 		def album = albumMap["uniq1"]
 		assert 1 == album.pictures.size()
+	}
+	
+	
+	@Test
+	public void testProcessFaces(){
+		def picture1 = new Picture();
+		picture1.faces.add("face1") 
+		def picture2 = new Picture();
+		picture2.faces.add("face1")
+		
+		def picture3 = new Picture();
+		picture3.faces.add("face2")
+		picture3.faces.add("face1")
+		def pictureMap = ["1234": picture1, "2":picture2, "3":picture3]
+		
+		def faces=["face1": ["name":"faceName1"], 
+				"face2":["name":"faceName1"]]
+				
+		def faceMap = AlbumDataParser.processFaces(faces, pictureMap)
+		assert 2 == faceMap.size();
+		
+		println "got map back: $faceMap"
+		
+		def f1 = faceMap["face1"]
+		assert 3 == f1.pictures.size()
+		def f2 = faceMap["face2"]
+		assert 1 == f2.pictures.size()
+		
+		
+		
+		
+		
+		
+		
 	}
 }
