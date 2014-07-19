@@ -28,10 +28,52 @@ class AlbumDataParser {
 		log.info("found ${records.name()} items")
 		def iPhotoArchive = new iPhotoAlbum();
 
-		Map<String,Object> recordsMap = new HashMap<String,Object>()
+		// U - as unproccessed, it is map of arrasy of list of arrays of primitives (string, ints..
+		Map<String,Object> recordsMapU = new HashMap<String,Object>()
 		def rootDict = records.dict.get(0)
 		log.info (" got root: ${rootDict.name()}")
-		recordsMap=  parseDict(rootDict);
+		recordsMapU =  parseDict(rootDict);
+		
+		def pictureMap = processImages(recordsMapU.get(MIL));
+		def albumMap = processAlbums(recordsMapU.get(ALBUMS), pictureMap)
+		
+
+		log.info("succesfully parsed ${pictureMap.size()} images")
+		log.info("succesfully parsed ${albumMap.size()} album")
+	}
+	
+	
+	def static processAlbums(albumsList, pictureMap){
+		def albumMap = [:]
+		albumsList.each {
+			Album a = new Album()
+			a.id=it["AlbumId"]
+			a.name=it["AlbumName"]
+			a.type=it["Album Tupe"]
+			it["KeyList"].each{
+				a.pictures.add(pictureMap[it])
+			}
+			
+			assert it["PhotoCount"] == a.pictures.size();
+			albumMap.put(a.id, a)
+		}
+		return albumMap
+	}
+	
+	def static processImages(map){
+		def imageMap = [:]
+		map.each{k,v ->
+			def p = new Picture();
+			p.path=v["ImagePath"]
+			p.key=k
+			if(v.containsKey("Faces")){
+				v["Faces"].each{
+					p.faces.add(it["face key"])
+				}
+			}
+			imageMap.put(k,p)
+		}
+		return imageMap;
 	}
 	
 	public static Object parseValue(Node n){
@@ -43,13 +85,20 @@ class AlbumDataParser {
 		if(type=="array"){
 			return parseArray(n)
 		}
-		if(type=="string"){
-			return n.value()
+		if(type=="string" || type=="real"){
+			return n.text()
 		}
 		if (type=="integer"){
-			return Integer.parseInt(n.value())
+			return Integer.parseInt(n.text())
 		}
-		throw new RuntimeException("unkown type $type")
+		
+		if (type=="true"){
+			return Boolean.TRUE
+		}
+		if(type =="false"){
+			return Boolean.FALSE
+		}
+		throw new RuntimeException("unkown type $type when parsing node: $n")
 	}
 
 	public static Map<String,Object> parseDict(Node n){
@@ -61,7 +110,8 @@ class AlbumDataParser {
 			if(key.name()!="key"){
 				throw new RuntimeException("unexpected key, ${key.name()}")
 			}
-			map.put(key.value(), parseValue(value))
+			//log.info("parsing dict: ${key.name()} X ${value.name()}")
+			map.put(key.text(), parseValue(value))
 		}
 		return map
 	}
@@ -75,7 +125,9 @@ class AlbumDataParser {
 		}
 		return list
 	}
-
+	
+	
+/*
 	private static void parseAlbums(Map rootNode){
 		values.each(){
 			List children = it.children();
@@ -108,7 +160,7 @@ class AlbumDataParser {
 			archive.addAlbum(album)
 			log.info("adding album $album")
 		}
-	}
+	}*/
 	//TODO try to lookup items by name rather then by silly parsing
 	private static void parseFaces(archive, values){
 		log.info ("X $values")

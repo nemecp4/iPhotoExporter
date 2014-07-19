@@ -4,7 +4,7 @@ class Album {
 	def name
 	def type
 	def id
-	def pictures = new ArrayList<Integer>()
+	def pictures = new ArrayList<String>()
 	
 	public void setPictures (List pics){
 		pics.each{

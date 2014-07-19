@@ -1,4 +1,13 @@
-.classpath 
-.project 
+#eclipse
+.classpath
+.project
 .settings
+bin/
+
+#
+#workaround for eclipse unable to work with grab
+lib
+
+#joe
+*~
 
