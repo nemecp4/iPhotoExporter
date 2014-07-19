@@ -17,25 +17,6 @@ class AlbumDataParser {
 	}
 
 	public void parse(){
-		//spike collections with lookahead stuff
-		Collection.metaClass.eachWithPeek = { closure ->
-			def last = null
-			delegate?.each { current ->
-				if (last) closure(last, current)
-				last = current
-			}
-			if (last) closure(last, null)
-		}
-
-		def myPeek = { closure ->
-			def last = null
-			delegate?.each { current ->
-				if (last) closure(last, current)
-				last = current
-			}
-			if (last) closure(last, null)
-		}
-
 		log.info("Parsing {} started", albumPath)
 		File xmlPath = new File(albumPath+"/"+"AlbumData.xml")
 
@@ -48,51 +29,31 @@ class AlbumDataParser {
 		def iPhotoArchive = new iPhotoAlbum();
 
 		Map<String,Object> recordsMap = new HashMap<String,Object>()
-		records.dict.each{
-			log.info (" got guy: ${it.name()} ")
-			List children = it.children();
-
-			Iterator myIterator = children.iterator();
-			while(myIterator.hasNext()){
-				Node key = myIterator.next();
-				Node value = myIterator.next();
-				if(key.name()!="key"){
-					throw new RuntimeException("unexpected key, ${key.name()}")
-				}
-				def valueO;
-				if(value.name()=="dict") recordsMap.put(key.value(), parseDict(value))
-
-				log.info("tuupple: ${key.name()} ${value.name()}")
-			}
+		def rootDict = records.dict.get(0)
+		log.info (" got root: ${rootDict.name()}")
+		recordsMap=  parseDict(rootDict);
+	}
+	
+	public static Object parseValue(Node n){
+		String type = n.name();
+		
+		if(type=="dict"){
+			return parseDict(n)
 		}
-
-		/*records.dict.each{
-		 log.info (" got guy: ${it.name()} ")
-		 List children = it.children();
-		 Iterator myIterator = children.iterator();
-		 while(myIterator.hasNext()){
-		 Node key = myIterator.next();
-		 Node value = myIterator.next();
-		 //log.info ("key(${key.text()})  value (${value.text()})")
-		 if (key.name()=="key" && key.text()== ALBUMS) {
-		 parseAlbums(iPhotoArchive, value.value())
-		 }
-		 if (key.name()=="key" && key.text()== MIL){
-		 parseImages(iPhotoArchive, value.value())
-		 }
-		 if (key.name()=="key" && key.text()== FACES){
-		 parseFaces(iPhotoArchive, value)
-		 }
-		 }
-		 }*/
+		if(type=="array"){
+			return parseArray(n)
+		}
+		if(type=="string"){
+			return n.value()
+		}
+		if (type=="integer"){
+			return Integer.parseInt(n.value())
+		}
+		throw new RuntimeException("unkown type $type")
 	}
 
 	public static Map<String,Object> parseDict(Node n){
-		log.info("got Node ${n.name()}")
-		n.children().each{
-			log.info("${it}")
-		}
-
+		def map = [:]
 		Iterator myIterator = n.iterator();
 		while(myIterator.hasNext()){
 			Node key = myIterator.next();
@@ -100,11 +61,22 @@ class AlbumDataParser {
 			if(key.name()!="key"){
 				throw new RuntimeException("unexpected key, ${key.name()}")
 			}
-			log.info("tuupple: ${key.name()} ${value.name()}")
+			map.put(key.value(), parseValue(value))
 		}
+		return map
+	}
+	
+	public static List parseArray(Node n){
+		def list = []
+		Iterator myIterator = n.iterator();
+		while(myIterator.hasNext()){
+			Node type = myIterator.next()
+			list.add(parseValue(type))
+		}
+		return list
 	}
 
-	private static void parseAlbums(archive, values){
+	private static void parseAlbums(Map rootNode){
 		values.each(){
 			List children = it.children();
 			Iterator myIterator = children.iterator();
