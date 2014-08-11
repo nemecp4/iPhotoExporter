@@ -19,4 +19,29 @@ def ALBUM_PATH="/home/backup/pavel/Shared_Pictures/hlavni/"
 log.info("Staarting")
 
 def parser = new AlbumDataParser(ALBUM_PATH)
-parser.parse()
+def iArchive = parser.parse()
+
+StringBuilder builder = new StringBuilder();
+builder.append("Albums:\n")
+iArchive.albumMap.each{k,album ->
+	if(album.type=="Regular")
+	builder.append(String.format("%-40s of type %8s  with %4d pictures\n", album.getPath(), album.type, album.pictures.size()))
+}
+log.info(builder.toString())
+
+builder = new StringBuilder();
+builder.append("Events:\n")
+iArchive.albumMap.each{k,album ->
+	if(album.type=="Event")
+	builder.append(String.format("%-40s of type %8s  with %4d pictures\n", album.name, album.type, album.pictures.size()))
+}
+log.info(builder.toString())
+
+
+builder = new StringBuilder();
+
+builder.append("Faces: \n")
+iArchive.facesMap.each{k,face ->
+	builder.append(String.format("%-30s with %-4d pictures\n",face.name, face.pictures.size()))
+}
+log.info(builder.toString())

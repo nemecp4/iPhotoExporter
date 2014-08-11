@@ -82,7 +82,7 @@ class ParserTest {
 	}
 	
 	@Test
-	public void testprocessAlbums(){
+	public void testProcessAlbums(){
 		def list =[]
 		
 		def a1 = [:]
@@ -102,6 +102,42 @@ class ParserTest {
 		
 		def album = albumMap["uniq1"]
 		assert 1 == album.pictures.size()
+		assert "event" == album.type
+	}
+	
+	@Test
+	public void testProcessAlbumsWithParent(){
+		def list =[]
+		
+		def a1 = [:]
+		a1["AlbumId"]="uniq1"
+		a1["AlbumName"]="name1"
+		a1["Album Type"]="Regular"
+		a1["PhotoCount"]=1
+		a1["KeyList"]=["1234"]
+		a1["Parent"]="folder1"
+		list.add(a1)
+		
+		def a2 = [:]
+		a2["AlbumId"]="folder1"
+		a2["AlbumName"]="Folder 1"
+		a2["Album Type"]="Folder"
+		a2["PhotoCount"]=1
+		a2["KeyList"]=["1234"]
+		list.add(a2)
+		
+		def pictureMap = ["1234":new Picture()]
+		
+		def albumMap = AlbumDataParser.processAlbums(list, pictureMap);
+		println "have list: $albumMap"
+		assert 2==albumMap.size();
+		
+		
+		def album = albumMap["uniq1"]
+		assert 1 == album.pictures.size()
+		assert "event" == album.type
+		assert "Folder 1" == album.parent.name
+		assert "Folder 1/name1/" == album.getPath()
 	}
 	
 	

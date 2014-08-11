@@ -2,21 +2,16 @@ package iPhotoParser
 
 import groovy.util.logging.Slf4j;
 @Slf4j
-class AlbumDataParser {
+public class AlbumDataParser {
 	def FACES = "List of Faces"
 	def ALBUMS= "List of Albums"
 	def MIL = "Master Image List"
 	def albumPath;
-
-	public AlbumDataParser(){
-	}
-
-
+	
 	public AlbumDataParser(albumPath){
 		this.albumPath=albumPath
 	}
-
-	public void parse(){
+	def  parse(){
 		log.info("Parsing {} started", albumPath)
 		File xmlPath = new File(albumPath+"/"+"AlbumData.xml")
 
@@ -25,23 +20,22 @@ class AlbumDataParser {
 		}
 		def records = new XmlParser().parse(xmlPath)
 
-		log.info("found ${records.name()} items")
+	
 		def iPhotoArchive = new iPhotoAlbum();
 
 		// U - as unproccessed, it is map of arrasy of list of arrays of primitives (string, ints..
 		Map<String,Object> recordsMapU = new HashMap<String,Object>()
 		def rootDict = records.dict.get(0)
-		log.info (" got root: ${rootDict.name()}")
 		recordsMapU =  parseDict(rootDict);
 
 		def pictureMap = processImages(recordsMapU.get(MIL));
 		def albumMap = processAlbums(recordsMapU.get(ALBUMS), pictureMap)
 		def facesMap = processFaces(recordsMapU.get(FACES), pictureMap)
 
-
-		log.info("succesfully parsed ${pictureMap.size()} images")
-		log.info("succesfully parsed ${albumMap.size()} album")
-		log.info("succesfully parsed ${facesMap.size()} faces")
+		iPhotoArchive.albumMap=albumMap
+		iPhotoArchive.facesMap=facesMap
+		iPhotoArchive.pictureMap=pictureMap
+		return iPhotoArchive
 	}
 
 	def static processFaces(faceMapU, pictureMap){
@@ -74,13 +68,19 @@ class AlbumDataParser {
 			Album a = new Album()
 			a.id=it["AlbumId"]
 			a.name=it["AlbumName"]
-			a.type=it["Album Tupe"]
+			a.type=it["Album Type"]
 			it["KeyList"].each{
 				a.pictures.add(pictureMap[it])
 			}
 
 			assert it["PhotoCount"] == a.pictures.size();
 			albumMap.put(a.id, a)
+		}
+		//itterate again to eval parrents
+		albumsList.each {
+			if(it.containsKey("Parent")){
+				albumMap[it["AlbumId"]].parent=albumMap[it["Parent"]]
+			}
 		}
 		return albumMap
 	}
@@ -149,69 +149,5 @@ class AlbumDataParser {
 			list.add(parseValue(type))
 		}
 		return list
-	}
-
-
-	/*
-	 private static void parseAlbums(Map rootNode){
-	 values.each(){
-	 List children = it.children();
-	 Iterator myIterator = children.iterator();
-	 Album album = new Album();
-	 while(myIterator.hasNext()){
-	 Node key = myIterator.next();
-	 Node value = myIterator.next();
-	 String kS = key.text();
-	 String vS = value.value();
-	 if(kS.equals("AlbumName")){
-	 album.setName(vS);
-	 }
-	 if(kS.equals("Album Type")){
-	 album.setType(vS)
-	 }
-	 if(kS.equals("AlbumId")){
-	 album.setId(vS)
-	 }
-	 if(kS.equals("KeyList")){
-	 //log.info ("have list of pictures in album ")
-	 def pics = []
-	 value.value().each{
-	 pics.add(it.text());
-	 }
-	 album.setPictures(pics)
-	 }
-	 }
-	 archive.addAlbum(album)
-	 log.info("adding album $album")
-	 }
-	 }*/
-	//TODO try to lookup items by name rather then by silly parsing
-	private static void parseFaces(archive, values){
-		log.info ("X $values")
-		String key = values.get("key")
-		Node dict = values.get("dict");
-		log.info ("XXX $key $dict ")
-		/*values.each(){
-		 List children = it.children();
-		 Iterator myIterator = children.iterator();
-		 Face face = new Face();
-		 while(myIterator.hasNext()){
-		 Node key = myIterator.next();
-		 Node value = myIterator.next();
-		 String kS = key.text();
-		 String vS = value.value();
-		 if(kS.equals("key")){
-		 face.setKey(vS);
-		 }
-		 if(kS.equals("name")){
-		 face.setName(vS)
-		 }
-		 }
-		 archive.addFace(face)
-		 log.info("adding face $face")
-		 }*/
-	}
-	private static void parseImages(archive, values){
-		log.info("parsing images: ")
 	}
 }
