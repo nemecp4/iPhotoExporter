@@ -4,8 +4,8 @@
 	])
 
 import groovy.util.logging.Slf4j
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import iPhotoParser.*
 
@@ -21,7 +21,10 @@ log.info("Staarting")
 def parser = new AlbumDataParser(ALBUM_PATH)
 def iArchive = parser.parse()
 
-StringBuilder builder = new StringBuilder();
+StringBuilder builder = new StringBuilder()
+builder.append("Succesfully parsed iPhoto Archive:")
+builder.append(iArchive.name)
+builder.append("\n")
 builder.append("Albums:\n")
 iArchive.albumMap.each{k,album ->
 	if(album.type=="Regular")
@@ -29,7 +32,7 @@ iArchive.albumMap.each{k,album ->
 }
 log.info(builder.toString())
 
-builder = new StringBuilder();
+builder = new StringBuilder()
 builder.append("Events:\n")
 iArchive.albumMap.each{k,album ->
 	if(album.type=="Event")
@@ -38,10 +41,21 @@ iArchive.albumMap.each{k,album ->
 log.info(builder.toString())
 
 
-builder = new StringBuilder();
+builder = new StringBuilder()
 
 builder.append("Faces: \n")
 iArchive.facesMap.each{k,face ->
 	builder.append(String.format("%-30s with %-4d pictures\n",face.name, face.pictures.size()))
 }
 log.info(builder.toString())
+
+def exportConfiguration = new ExportConfiguration()
+	.setExportPath("/data/tmp/test")
+	.setClearExport(true)
+	.addAlbum("Lucka si hraje s klukama").addAlbum("Svatava Hellerová")
+	.setNewerThanDate("2014-01-01")
+	.addFace("Daniela Donatova")
+	.addPathReplace("/Users/pavel/Shared_Pictures/hlavni/", "/data/export_iphoto/hlaveni/")
+
+def exporter = new Exporter().setExportConfiguration(exportConfiguration).setAlbum(iArchive)
+exporter.export()

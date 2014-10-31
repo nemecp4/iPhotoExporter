@@ -63,6 +63,7 @@ class ParserTest {
 		
 		def pic2 = [:]
 		pic2["ImagePath"]="c:\\path\\ahoj"
+		pic2["DateAsTimerInterval"]="999"
 		map[4121]=pic2
 		
 		
@@ -79,6 +80,7 @@ class ParserTest {
 		
 		def picture2 = imageMap[4121]
 		assert 2 == picture2.faces.size()
+		assert "999" == picture2.timeStamp 
 	}
 	
 	@Test
@@ -88,9 +90,10 @@ class ParserTest {
 		def a1 = [:]
 		a1["AlbumId"]="uniq1"
 		a1["AlbumName"]="name1"
-		a1["Album Type"]="event"
+		a1["Album Type"]="Event"
 		a1["PhotoCount"]=1
 		a1["KeyList"]=["1234"]
+		a1["ProjectEarliestDateAsTimerInterval"]="123456"
 		list.add(a1)
 		
 		def pictureMap = ["1234":new Picture()]
@@ -100,9 +103,10 @@ class ParserTest {
 		assert 1==albumMap.size();
 		
 		
-		def album = albumMap["uniq1"]
+		Album album = albumMap["uniq1"]
 		assert 1 == album.pictures.size()
-		assert "event" == album.type
+		assert "Event" == album.type
+		assert "123456" == album.getTimeInterval()
 	}
 	
 	@Test
@@ -135,7 +139,7 @@ class ParserTest {
 		
 		def album = albumMap["uniq1"]
 		assert 1 == album.pictures.size()
-		assert "event" == album.type
+		assert "Regular" == album.type
 		assert "Folder 1" == album.parent.name
 		assert "Folder 1/name1/" == album.getPath()
 	}

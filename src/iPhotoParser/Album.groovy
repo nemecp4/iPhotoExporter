@@ -5,6 +5,7 @@ class Album {
 	def type
 	def id
 	def parent //string
+	def timeInterval //event ProjectEarliestDateAsTimerInterval value
 	def pictures = new ArrayList<String>()
 
 	public void setPictures (List pics){
@@ -22,8 +23,12 @@ class Album {
 		if(parent==null){
 			return "${name}/"
 		}else{
-			return parrent.getParentPath()+"${name}/"
+			return parent.getParentPath()+"${name}/"
 		}
+	}
+	
+	public String getTimeInterval(){
+		return timeInterval;
 	}
 
 	public String getParentPath(){
@@ -32,7 +37,7 @@ class Album {
 		}else if(parent==null){
 			return "${name}/"
 		}else{
-			return parrent.getParentPath()+"${name}/"
+			return parent.getParentPath()+"${name}/"
 		}
 	}
 }

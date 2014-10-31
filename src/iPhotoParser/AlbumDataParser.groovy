@@ -18,15 +18,16 @@ public class AlbumDataParser {
 		if (!xmlPath.exists() || !xmlPath.isFile()){
 			log.error ("can't read file ${xmlPath}")
 		}
-		def records = new XmlParser().parse(xmlPath)
+		def records = new XmlParser().parse(new InputStreamReader(new FileInputStream(xmlPath)/*, "MacRoman"*/))
 
 	
 		def iPhotoArchive = new iPhotoAlbum();
 
-		// U - as unproccessed, it is map of arrasy of list of arrays of primitives (string, ints..
+		// U - as unprocessed, it is map of arrays of list of arrays of primitives (string, ints..
 		Map<String,Object> recordsMapU = new HashMap<String,Object>()
 		def rootDict = records.dict.get(0)
 		recordsMapU =  parseDict(rootDict);
+		iPhotoArchive.name=recordsMapU.get("Archive Path");
 
 		def pictureMap = processImages(recordsMapU.get(MIL));
 		def albumMap = processAlbums(recordsMapU.get(ALBUMS), pictureMap)
@@ -69,6 +70,11 @@ public class AlbumDataParser {
 			a.id=it["AlbumId"]
 			a.name=it["AlbumName"]
 			a.type=it["Album Type"]
+			
+			if("Event".equals(it["Album Type"])){
+				a.timeInterval=it["ProjectEarliestDateAsTimerInterval"]
+			}
+			
 			it["KeyList"].each{
 				a.pictures.add(pictureMap[it])
 			}
@@ -91,6 +97,7 @@ public class AlbumDataParser {
 			def p = new Picture();
 			p.path=v["ImagePath"]
 			p.key=k
+			p.timeStamp=v["DateAsTimerInterval"]
 			if(v.containsKey("Faces")){
 				v["Faces"].each{
 					p.faces.add(it["face key"])
