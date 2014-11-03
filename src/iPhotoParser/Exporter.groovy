@@ -1,26 +1,38 @@
 package iPhotoParser
+import java.nio.file.Paths
+import java.nio.file.Files
 import groovy.util.logging.Slf4j
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.apache.commons.io.FileUtils;
+
+import static java.nio.file.StandardCopyOption.*;
 
 class Exporter {
 	def log = LoggerFactory.getLogger("EXPORT")
 	def configuration
 	def iPhotoAlbum
 	
-	boolean execute = false;
+	boolean dryRun=false
 
 	public Exporter setExportConfiguration(ExportConfiguration cfg){
 		configuration = cfg;
 		return this;
+	}
+	
+	public Exporter setDryRun(dryRun){
+		this.dryRun=dryRun
+		return this
 	}
 	public Exporter setAlbum(iPhotoAlbum album){
 		this.iPhotoAlbum=album
 		return this
 	}
 
+
 	public void export(){
-		def albumToExport = []
+		def albumToExport = new HashSet()
 		
 		for(String albumName: configuration.albumList){
 			def album = iPhotoAlbum.getAlbumByName(albumName)
@@ -43,38 +55,34 @@ class Exporter {
 					albumToExport.add(a);
 				}
 				else{
-					log.info("album ${a.name} date: ${TimeStampReader.convertToDate(a.getTimeInterval())} is older")
+					log.debug("album ${a.name} date: ${TimeStampReader.convertToDate(a.getTimeInterval())} is older")
 				}
 			}	
 		}
 		for (String faceName: configuration.facesList){
 			Face f = iPhotoAlbum.getFaceByName(faceName);
 			if(f==null){
-				log.info("can't find face for name:${f.name}")
+				log.info("can't find face for name:${faceName}")
 			}else{
 				log.info("adding face by name ${f.name}")
 				albumToExport.add(f);
 			}
 		}
-		log.info("going to export ${albumToExport.size}: items")
+		log.info("going to export ${albumToExport.size()}: items ${albumToExport}")
+
 		
 		File exportDir = new File(configuration.exportPath)
 		
 			
 		if(exportDir.exists() && configuration.clearExport){
-			if(execute){
-				Files.deleteIfExists(exportDir.toPath())
-			}else{
-				log.info("going to delete $exportDir")
-			}
+			log.debug("going to delete $exportDir")
+			if(!dryRun) FileUtils.deleteDirectory(exportDir)
 		}
 		if(!exportDir.exists()){
-			if(execute){
-				Files.createDirectories(exportDir.toPath())
-			}else{
-				log.info("going to create export dir: $exportDir")
-			}
+			log.debug("going to create export dir: $exportDir")
+			if(!dryRun) Files.createDirectories(exportDir.toPath())
 		}
+		
 		
 		albumToExport.each{
 			def replacer={it}
@@ -82,11 +90,18 @@ class Exporter {
 				replacer={it.replace(configuration.pathReplaceFrom, configuration.pathReplaceTo)}
 			}
 			def albumPath = "${exportDir}/${it.type}/${it.getPath()}"
-			log.info("scheduled for export: ${it.name}/${it.type}) to ${albumPath}")
+			log.info("scheduled for export: ${it.name}(${it.type}) to >${albumPath}<")
+			
+			log.debug("creating directory: ${albumPath}")
+			if(!dryRun) Files.createDirectories( Paths.get(albumPath))
+			
 			it.pictures.each{
 				def picName= new File(it.getPath()).getName();
-				def picPath = replacer(it.getPath())
-				log.info("\t${picPath} -> ${albumPath}/${picName}")
+				def picPathFrom = replacer(it.getPath())
+				def picPathTo="${albumPath}/${it.key}_${picName}"
+				
+				log.debug("\tcp ${picPathFrom} -> ${picPathTo}")
+				if(!dryRun) Files.copy( Paths.get(picPathFrom), Paths.get(picPathTo), COPY_ATTRIBUTES)
 			}	
 		}
 	}

@@ -15,7 +15,7 @@ class Album {
 	}
 
 	public String toString(){
-		String result = String.format("Album(%25s) - %10s - with %5d pictures", name, type, pictures.size());
+		String result = String.format("Album(%s/%s/%dpic)", name, type, pictures.size());
 		return result
 	}
 
