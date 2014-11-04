@@ -22,6 +22,9 @@ cli.f("list all faces")
 cli.a("list all albums (except directories)")
 cli.e("list all events")
 cli.v("be little bit more verbose")
+cli.h(longOpt: 'help', "print help")
+
+cli.generateDefault("create example of property file")
 cli.export("export accoarding to configuration")
 cli.dryRun("do not actualy copy files, just execute and log")
 cli.cfg(args:1, argName:'file', 'use given file as configuration')
@@ -32,8 +35,21 @@ if(options==null){
 		System.exit(1)
 }
 
+if(options.h || options.help){
+	cli.usage();
+	System.exit(0)
+}
+if(options.generateDefault){
+	log.info("generating default configuration, be sure to provide proper values!")
+	def content = ExportConfiguration.generateDefault();
+	new File("default.properties").write(content);
+	log.info("file stored: default.properties")
+	System.exit(0)
+}
+
 if(!options.cfg){
 	log.error("--cfg <file> is mandatory")
+	cli.usage()
 	System.exit(1)
 }
 

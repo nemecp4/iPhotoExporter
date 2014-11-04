@@ -32,6 +32,27 @@ class ExportConfiguration {
 		pathReplaceTo=props.pathReplaceTo
 		
 	}
+	public static String generateDefault(){
+		def builder = new StringBuilder();
+		
+		builder.append('albumPath=/Users/myuser/Pictures/default')
+		builder.append("\n")
+		builder.append('exportPath=/Users/myuser/Pictures/export')
+		builder.append("\n")
+		builder.append("clearExport=true")
+		builder.append("\n")
+		builder.append("albumList=\"Album1\" , \"Album2\"")
+		builder.append("\n")
+		builder.append("newerThanDate=2014-01-01")
+		builder.append("\n")
+		builder.append("faceList=\"Face1\", \"Face2\"")
+		builder.append("\n")
+		builder.append('pathReplaceFrom=')
+		builder.append("\n")
+		builder.append('pathReplaceTo=')
+		builder.append("\n")
+		return builder.toString();
+	}
 	public static List<String> parseList(String line){
 		def list = []
 		if(line!=null && line.size()>0){
